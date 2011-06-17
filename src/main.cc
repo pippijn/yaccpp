@@ -2,7 +2,7 @@
 
 #include "lexer.h"
 #include "parser.h"
-#include "printer.h"
+#include "phases.h"
 #include "sighandler.h"
 
 #include <algorithm>
@@ -24,12 +24,11 @@ try
 
   if (!strcmp (argv[1], "--help"))
     {
-      puts ("usage: jmlc <jmlfile>");
+      puts ("usage: yaccpp <file> [file]...");
       return EXIT_SUCCESS;
     }
 
   std::vector<std::string> files (argv + 1, argv + argc);;
-  std::sort (files.begin (), files.end ());
 
 #if 0
   std::copy (files.begin (), files.end (), std::ostream_iterator<std::string> (std::cout, "\n"));
@@ -40,8 +39,10 @@ try
 
   if (node_ptr doc = parse ())
     {
-      printer prn;
-      doc->accept (prn);
+      phases::run ("nop", doc);
+      phases::run ("anon_rules", doc);
+      phases::run ("cardinality", doc);
+      phases::run ("print", doc);
     }
   else
     {

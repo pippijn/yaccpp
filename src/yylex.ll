@@ -34,7 +34,7 @@
 %option header-file="yylex.h"
 %option bison-locations
 %option reentrant
-%option ecs full 8bit
+/*%option ecs full 8bit*/
 %option yylineno stack
 %option nounput noinput nounistd
 %option never-interactive
@@ -43,16 +43,18 @@
 
 WS	[ \t\v\n\r]
 CID	[a-zA-Z_][a-zA-Z0-9_]*
-YID	[a-zA-Z`_.-][a-zA-Z0-9_.-]*
+YID	[a-zA-Z`_$.-](\.?[a-zA-Z0-9_$-])*
 YVARID	[a-zA-Z0-9$_]
 YVAR	[$@`]("["({YVARID}|-)+"]"|{YVARID}+)
 CODE	[^a-zA-Z`$@_{}"']
 DIGIT	[0-9]
 
 %%
-<INITIAL,RULES>{WS}+			{ }
-"//".*					{ }
-<*>"/*"					{ PUSH (COMMENT); }
+<INITIAL,RULES>{
+	{WS}+				{ }
+	"//".*				{ }
+	"/*"				{ PUSH (COMMENT); }
+}
 <COMMENT>{
 	[^*]+				{ }
 	"*"				{ }
@@ -122,7 +124,8 @@ DIGIT	[0-9]
 ^"%%"					{ PUSH (RULES); Return (TK_SEPARATOR); }
 <RULES>{
 	{YID}				{ Return (TK_IDENTIFIER); }
-	[\[\],:|;()]			{ return yytext[0]; }
+	"..."				{ Return (TK_ELLIPSIS); }
+	[?*+\[\],:|;()]			{ return yytext[0]; }
 	"%%"				{ POP (); BEGIN (EPILOGUE); Return (TK_SEPARATOR); }
 	"{"				{ PUSH (CODE); return yytext[0]; }
 }

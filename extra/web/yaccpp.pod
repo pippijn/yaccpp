@@ -14,13 +14,29 @@ purely functional dynamically typed domain specific programming language for
 describing context-free grammars. That is quite a mouthful, but this power does
 not get in the way. Yaccpp is still about writing grammars, not programs.
 
-=over
-
-=item // Comments
+=head2 // Comments
 
 Yacc allows /* */ comments. Yaccpp also allows C99-style // comments.
 
-=item Merge multiple input files
+=head2 Generate foreign language actions
+
+If a foreign language such as L<Aldor|aldor> or Perl includes a C FFI, Yaccpp
+can generate calls into this language, so that actions can be written in a non-C
+language while keeping the parser implementation in C. This way, new languages
+can get a well-tested parser generator without having to write their own Bison
+template. A Perl module or Aldor domain will be generated to encapsulate the
+action code. This feature can be controlled using the C<%action-lang> directive.
+
+=begin code CPP
+
+   %action-lang "Aldor" MyLanguageParserDom
+   // or:
+   %action-lang "Perl" Parse::MyLanguage
+
+=end code CPP
+
+
+=head2 Merge multiple input files
 
 By listing several files on the command line, you can merge multiple grammar
 fragments into a single grammar. This aids in modularising grammars. You may
@@ -28,12 +44,44 @@ optionally define an entry point into the fragment with C<%start>. All
 nonterminals in the fragment except the start symbol will be prefixed with the
 start symbol name, thus creating a kind of scope.
 
-=item Automatic parse tree generation
+=head2 Automatic parse tree generation
 
-Yaccpp can generate parse tree classes for C++ or structs for C. These will
-represent the original grammar structure rather than the expanded grammar.
+Yaccpp can generate parse tree classes for C++ or structs for C. These represent
+the original grammar structure rather than the expanded grammar. Note that
+unlike abstract syntax trees (ASTs), the parse tree contains everything,
+including all tokens such as C<'+'>, C<';'> and C<'{'> tokens. The class members
+will carry the names of the rhs parts. If more than one rhs part has the same
+name, an 1-based index is appended.
 
-=item Expand macro grammars
+=begin code CPP
+
+   add_exp
+      : mul_exp
+      | add_exp '+' mul_exp %class add_exp
+      | add_exp '-' mul_exp %class add_exp
+      ;
+
+=end code CPP
+
+The above grammar productions will yield two classes. By using the C<%class>
+directive, the common productions are written directly in the base class
+C<add_exp_node>. This class will have three members C<add_exp>, C<tok>,
+C<mul_exp>.
+
+If C<%class> is omitted, each production will get its own class,
+unless a pattern can be detected. If C<%class> had been omitted in the above
+example, the three classes would be:
+
+=begin code CPP
+
+   add_exp_node <<abstract>>
+   add_exp_node1 : add_exp_node { node *mul_exp; };
+   add_exp_node2 : add_exp_node { node *add_exp, *tok, *mul_exp; };
+
+=end code CPP
+
+
+=head2 Expand macro grammars
 
 Yaccpp implements a variant of macro grammars as described in Peter Thiemann's
 L<Macros for Context-Free Grammars|http://www.informatik.uni-freiburg.de/~thiemann/papers/macro-grammar.pdf>
@@ -41,16 +89,16 @@ paper.
 
 =begin code CPP
 
-   // E {sep E}*
-   list.1(E, sep)
+   // E (sep E)*
+   list(E, sep, list_type)
       : E
-         { ($$ = new list)->add ($1); }
-      | list.1(E, sep) sep E
          // You may refer to arguments of macros in action code using the ` prefix.
-         { ($$ = $1)->add ($3, `sep); }
+         { ($$ = new `list_type)->add ($1); }
+      | list(E, sep, list_type) sep E
+         { ($$ = $1)->add ($3); }
       ;
 
-   statements: list.1 (statement, ';') ;
+   argument_list: '(' list (argument, ';', node_list) ')';
 
 =end code CPP
 
@@ -58,8 +106,10 @@ In addition to the expansion described in the paper, Yaccpp supports higher
 order programming by passing unexpanded macro names to other macros. These
 macros can then expand the passed macro.
 
+=head3 Currying and variadic macros
+
 Macros can also be partially expanded by passing a strict subset of the required
-arguments. This is a form of currying. Named arguments are also supported.
+arguments. This is a form of currying. Arguments can be passed explicitly by name.
 Macros can be overloaded by argument count. Using the C<...> operator at the end
 of a parameter list, a macro may accept any number of arguments. Overloading
 resolution will select L<variadic|http://en.wikipedia.org/wiki/Variadic_function>
@@ -78,6 +128,10 @@ macros only if there is no overload with the exact number of parameters.
    // until there is no "rest", anymore, and the first "apply" macro is called
    apply(macro, arg, rest...): apply (apply (macro, arg), rest...) ;
 
+   expr.opt
+      : opt(E: expr) // named arguments
+      ;
+
 =end code CPP
 
 Variadic arguments can not be directly expanded in the grammar. If you need a
@@ -90,34 +144,108 @@ something like this:
 
 =end code CPP
 
+=head3 Specialisation (@spec)
+
+Sometimes you may want to specialise a generic macro by production. Macros can
+be specialised by overloading them and defining one or more of its arguments
+with a production name.
+
+=begin code CPP
+
+   // Generic list macro for the + operator
+   list.1(E)
+      : E
+      | list.1(E) E
+      ;
+
+   // specialise the macro for list of "statement"
+   list.1(E: statement)
+      : E ';'
+      | list.1(E) E ';'
+      ;
+
+=end code CPP
+
+=head3 Pattern matching
+
+Macros can not only be specialised with production names, but also with ML-style
+patterns.
+
+=begin code CPP
+
+   // specialise the '+' macro for list of optional statements
+   list.1(E: opt(E: statement))
+      : ';'
+      | list.1(E) E ';'
+      ;
+
+   // partially specialise to extract the argument
+   // this macro reverses the effect of opt(E)
+   notopt(E: opt(E)) : E ;
+   // anything else is used as-is
+   notopt(E): E ;
+
+   foo
+      : notopt(opt(statement)) // => statement
+      | notopt(expression) // => expression
+      ;
+
+=end code CPP
+
+=head3 Analysis
+
 Yaccpp performs an extensive analysis of the macro grammar before attempting to
 expand it, to ensure that the grammar terminates. It is also an error to have
-unexpanded or partially expanded macros when the grammar terminates.
+unexpanded or partially expanded macros when the grammar terminates. Anonymous
+macros defined inline in an argument list are not supported.
+
+=head2 Refer to other symbols on the rhs
+
+As a form of abbreviation, you may use variable references on the rhs of a rule.
+
+=begin code CPP
+
+   some_macro(with,many,arguments,it,would,be,unfeasible,to,write,it,again)
+      : $$ with it
+      | many $$ arguments
+      | unfeasible to write $$
+      | again $$ to write
+      ;
+
+   initialiser
+      : '[' assignment.expression "..." $2 ']' basic.initialiser
+      ;
+
+   asm.statement
+      : "ASM" type.qualifier '(' string.literal.list
+        ':' asm.argument.list[L]? // define a named component
+        ':' $L? // refer to it here
+        ':' asm.clobbered.list ')' ';'
+
+=end code CPP
 
 
-=item Regular grammars on the rhs
+=head2 Regular grammars on the rhs
 
-Yaccpp supports regular grammars known from regular expressions on the right
-hand side of rules.
+Yaccpp supports regular grammars known from regular expressions and EBNF on the
+right hand side of rules.
 
 =begin code CPP
 
    identifier
       // Note that you need to write out the "..." yourself. Character ranges
       // are not supported.
-      : ('a' | 'b' | ... 'z' | 'A' | ... | 'Z')
-        ('a' | 'b' | ... 'z' | 'A' | ... | 'Z' | '0' | ... '9')*
+      : ('a' | 'b' | ... | 'z' | 'A' | ... | 'Z')
+        ('a' | 'b' | ... | 'z' | 'A' | ... | 'Z' | '0' | ... '9')*
       ;
 
    // Be careful:
    macro(A): A;
-   // Since the argument is not an atom but rather a compound, it will
-   // semantically be macro ((foo | bar)) and "A" in "macro" will be (foo | bar).
-   // (foo | bar) is first expanded to an out-of-line rule, then passed to the
-   // macro. The * then applies to the expanded macro call.
-   nonterm: macro (foo | bar)*;
+   nonterm: macro (foo | bar)*; // does not call macro
+   nonterm: macro ((foo | bar))*; // calls macro and repeats the expansion {0,n}
+   nonterm: macro ((foo | bar)*); // repeats the alternatives {0,n} and calls macro on that
 
-   // This would expand to the the following:
+   // The second definition would expand to the the following:
    nonterm: macro (anon123)*;
    nonterm: list.0 (macro (anon123));
    nonterm: list.0 (macro__anon123);
@@ -151,12 +279,34 @@ The C<?> postfix operator calls the C<opt(E)> macro on the preceding atom.
 
 The C<|> infix operator does not require any special support, because it is
 actually just an anonymous rule. It is copied to a separate rule with a unique
-name and that rule name is written in its place.
+name and that rule name is written in its place. You can write semantic actions
+in anonymous rules just as you would in global rules. If all alternatives have
+the same type, the type of the anonymous rule is inferred to be that type.
+Otherwise, you need to specify the type, explicitly.
+
+=begin code CPP
+
+   // OK: all alternatives have the same type; $1's type is "token"
+   local: (alt1 | alt2) { $$ = $1; } // this is implicit
+   alt1<token>: TK_IDENTIFIER;
+   alt2<token>: TK_STRING;
+
+   // OK: explicit type given
+   local: (alt1 | alt2)<node>; // implicit $$ = $1
+   alt1<node>: funcall;
+   alt2<token>: TK_IDENTIFIER;
+
+   // ERROR: ambiguous type
+   local: (alt1 | alt2);
+   alt1<node>: funcall;
+   alt2<token>: TK_IDENTIFIER;
+
+=end code CPP
 
 =back
 
 
-=item Named references
+=head2 Named references
 
 Added in Bison 2.5, this feature is very useful for long rules. Especially when
 these rules change a lot, it is easy to make a mistake in counting the indices.
@@ -175,7 +325,7 @@ See the L<Bison manual|http://www.gnu.org/software/bison/manual/bison.html#Named
 for more examples and details.
 
 
-=item Import token names and numbers from an enum
+=head2 Import token names and numbers from an enum
 
 The C<%include-enum> directive can be used to parse a C enumeration in order to
 extract token names and numbers. This is useful for unlinking the lexical
@@ -192,7 +342,7 @@ depending on each other.
 =end code CPP
 
 
-=item Specify types on lhs of rules
+=head2 Specify types on lhs of rules
 
 Defining the types at the top of a grammar file splits information about rules
 in two parts: the type information and the actual rule. In Yaccpp, you can
@@ -212,7 +362,7 @@ If you split the definition of a nonterminal into several separate rules, you
 only need to define the type on one of them. Defining a different type on the
 same nonterminal is an error.
 
-=item Default token and rule types
+=head2 Default token and rule types
 
 Using the C<%default-token-type>, you can specify the type to be used on tokens
 read from the included enum. They may be overridden using the C<%token> directive.
@@ -234,7 +384,7 @@ The C<%default-rule-type> defines the default type of lhs symbols.
 You may override the type analogously to the token types.
 
 
-=item "typeof"
+=head2 "typeof"
 
 You may refer to the type of any typed nonterminal or terminal using the new
 C<#> symbol.
@@ -274,7 +424,7 @@ Referring to the type of untyped (non)terminals is an error.
 
 =back
 
-=item Extensible through Perl
+=head2 Extensible through Perl
 
 If all the added functionality is not enough for you or you need something done
 slightly differently, you can use the Perl API to influence the translation and

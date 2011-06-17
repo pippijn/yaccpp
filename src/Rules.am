@@ -5,10 +5,13 @@ yaccpp_SOURCES =	\
 	main.cc		\
 	node.cc		\
 	parser.cc	\
-	printer.cc	\
+	phases.cc	\
 	sighandler.cc	\
+	visitor.cc	\
 	yylex.ll	\
 	yyparse.yy
+
+include phases/Rules.am
 
 BUILT_SOURCES += yylex.cc yyparse.cc
 EXTRA_DIST += yylex.h

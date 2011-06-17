@@ -14,9 +14,11 @@ using namespace nodes;
 %}
 
 %union {
+  char character;
   nodes::node *node;
   nodes::token *token;
   nodes::node_list *list;
+  nodes::macro_args *macro_args;
 }
 
 %define api.pure
@@ -26,8 +28,10 @@ using namespace nodes;
 %token-table
 %glr-parser
 
-%parse-param { parser *self }
-%lex-param { parser *self }
+%expect 3
+
+%parse-param	{ parser *self }
+%lex-param	{ parser *self }
 
 %token TK_EOF 0				"end of file"
 
@@ -41,6 +45,7 @@ using namespace nodes;
 
 %token<token> TK_CDECL			"C declarations"
 %token<token> TK_SEPARATOR		"%%"
+%token<token> TK_ELLIPSIS		"..."
 %token<token> TK_YACCVAR		"variable"
 %token<token> TK_DIRECTIVE		"directive"
 %token<token> TK_TYPE			"type"
@@ -53,6 +58,7 @@ using namespace nodes;
 %type<token> type.opt
 %type<token> integer.opt
 %type<token> string.opt
+%type<token> ellipsis.opt
 
 %type<list> documents
 %type<list> options
@@ -62,20 +68,23 @@ using namespace nodes;
 %type<list> rules
 %type<node> rule
 %type<list> rule_rhs
+%type<list> rule_rhs.2
 %type<list> rule_alt
 %type<node> rule_alt_part
 %type<node> nonterminal
+%type<character> cardinality
 %type<node> macro_call
-%type<token> name_opt
+%type<token> name.opt
 %type<token> name
-%type<list> macro_args_opt
-%type<list> macro_args
+%type<macro_args> macro_args.opt macro_args
 %type<token> macro_name
-%type<token> macro_arg
+%type<node> macro_arg
+%type<token> named_arg.opt named_arg
 %type<list> code
 %type<token> code_part
 
 %destructor { delete $$; } <*>
+%destructor { } <character>
 
 %%
 /****************************************************************************
@@ -144,7 +153,12 @@ rule
 
 rule_rhs
 	: rule_alt							{ ($$ = new rule_rhs)->add ($1); }
-	| rule_rhs '|' rule_alt						{ ($$ = $1)->add ($3); }
+	| rule_rhs.2
+	;
+
+/* at least two alternatives */
+rule_rhs.2
+	: rule_rhs '|' rule_alt						{ ($$ = $1)->add ($3); }
 	;
 
 rule_alt
@@ -153,17 +167,27 @@ rule_alt
 	;
 
 rule_alt_part
-	: nonterminal
+	: nonterminal							{ $$ = $1; }
+	| nonterminal cardinality					{ $$ = new nonterminal ($1, $2,  0,  0); }
+	| nonterminal cardinality cardinality				{ $$ = new nonterminal ($1, $2, $3,  0); }
+	| nonterminal cardinality cardinality cardinality		{ $$ = new nonterminal ($1, $2, $3, $4); }
 	| '{' code '}'							{ $$ = $2; }
 	;
 
+cardinality
+	: '*'								{ $$ = '*'; }
+	| '?'								{ $$ = '?'; }
+	| '+'								{ $$ = '+'; }
+	;
+
 nonterminal
-	: macro_call
+	: macro_call							{ $$ = $1; }
 	| TK_CHARACTER							{ $$ = $1; }
+	| '(' rule_rhs.2 ')' type.opt					{ $$ = new anonymous_rule ($2, $4); }
 	;
 
 macro_call
-	: macro_name macro_args_opt name_opt				{ $$ = new macro_call ($1, $2, $3); }
+	: macro_name macro_args.opt name.opt				{ $$ = new macro_call ($1, $2, $3); }
 	;
 
 macro_name
@@ -171,7 +195,7 @@ macro_name
 	| TK_STRING
 	;
 
-name_opt
+name.opt
 	: /* empty */							{ $$ = NULL; }
 	| name
 	;
@@ -180,9 +204,14 @@ name
 	: '[' TK_IDENTIFIER ']'						{ $$ = $2; }
 	;
 
-macro_args_opt
+macro_args.opt
 	: /* empty */							{ $$ = NULL; }
-	| '(' macro_args ')'						{ $$ = $2; }
+	| '(' macro_args ellipsis.opt ')'				{ $$ = $2; $$->is_variadic = $3; delete $3; }
+	;
+
+ellipsis.opt
+	: /* empty */							{ $$ = NULL; }
+	| "..."
 	;
 
 macro_args
@@ -191,7 +220,16 @@ macro_args
 	;
 
 macro_arg
-	: TK_IDENTIFIER
+	: named_arg.opt nonterminal					{ $$ = new macro_arg ($1, $2); }
+	;
+
+named_arg.opt
+	: /* empty */							{ $$ = NULL; }
+	| named_arg
+	;
+
+named_arg
+	: TK_IDENTIFIER ':'
 	;
 
 code

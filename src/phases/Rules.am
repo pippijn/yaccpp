@@ -1,0 +1,5 @@
+yaccpp_SOURCES +=	\
+	anon_rules.cc	\
+	cardinality.cc	\
+	nop.cc		\
+	print.cc

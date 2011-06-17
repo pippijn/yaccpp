@@ -3,6 +3,7 @@ include automake/cppinc.am
 
 AM_YFLAGS += -d --verbose
 AM_CPPFLAGS += -ggdb3
+AM_CPPFLAGS += -D_GLIBCXX_DEBUG
 AM_CXXFLAGS += -fnon-call-exceptions
 AM_LDFLAGS += -lboost_filesystem-mt
 AM_LDFLAGS += -lboost_system-mt

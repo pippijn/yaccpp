@@ -1,5 +1,6 @@
 EXTRA_DIST +=		\
 	lexer.h		\
+	local.h		\
 	node.h		\
 	object_pool.h	\
 	parser.h	\
