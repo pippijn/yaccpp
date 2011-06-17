@@ -1,0 +1,17 @@
+bin_PROGRAMS = yaccpp
+
+yaccpp_SOURCES =	\
+	lexer.cc	\
+	main.cc		\
+	node.cc		\
+	parser.cc	\
+	printer.cc	\
+	sighandler.cc	\
+	yylex.ll	\
+	yyparse.yy
+
+BUILT_SOURCES += yylex.cc yyparse.cc
+EXTRA_DIST += yylex.h
+
+yylex.cc: $(CURDIR)/yylex.ll
+	$(AM_V_LEX)flex -o$@ $<

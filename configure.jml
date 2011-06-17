@@ -1,0 +1,16 @@
+project {
+	name: "YaccPP"
+	version: "0.1"
+	contact: "yaccpp@xinutec.org"
+
+	lang: "C++"
+
+	libtool: no
+
+	ac_prog {
+		li { LEX }
+		li { YACC }
+	}
+
+	output;
+}

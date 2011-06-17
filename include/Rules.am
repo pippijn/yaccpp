@@ -1,0 +1,10 @@
+EXTRA_DIST +=		\
+	lexer.h		\
+	node.h		\
+	object_pool.h	\
+	parser.h	\
+	printer.h	\
+	sighandler.h	\
+	visitor.h	\
+	y.tab.h		\
+	ylcode.h
