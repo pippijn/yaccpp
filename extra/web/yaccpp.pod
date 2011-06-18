@@ -251,11 +251,6 @@ right hand side of rules.
    nonterm: list.0 (macro__anon123);
    nonterm: list.0__macro__anon123;
 
-   not-a-macro: something;
-   // Since not-a-macro does not accept any arguments, it is not called and
-   // (foo | bar) is expanded in "nonterm".
-   nonterm: not-a-macro (foo | bar);
-
 =end code CPP
 
 As a generic tool, Yaccpp cannot know how you want to handle lists and optional
