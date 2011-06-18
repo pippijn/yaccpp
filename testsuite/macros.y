@@ -36,7 +36,7 @@ list(E,sep,list_type)
 	: E
 		// You may refer to arguments of macros in action code using the ` prefix.
 		{ ($$ = new `list_type)->add ($1); }
-	| list(E, sep, list_type) sep E
+	| $$ sep E
 		{ ($$ = $1)->add ($3); }
 	;
 

@@ -7,14 +7,14 @@
 #undef resume_list
 #define resume_list(p)          BOOST_FOREACH (node_ptr const &p, n.list)
 
-using namespace nodes;
-
 namespace
 {
   struct print
     : visitor
   {
     node_ptr visit (token &n);
+    node_ptr visit (identifier &n);
+    node_ptr visit (yaccvar &n);
     node_ptr visit (document &n);
     node_ptr visit (options &n);
     node_ptr visit (directive &n);
@@ -26,6 +26,7 @@ namespace
     node_ptr visit (rule &n);
     node_ptr visit (rule_rhs &n);
     node_ptr visit (rule_alt &n);
+    node_ptr visit (rule_alt_part &n);
     node_ptr visit (nonterminal &n);
     node_ptr visit (macro_call &n);
     node_ptr visit (macro_args &n);
@@ -58,6 +59,20 @@ print::visit (token &n)
       printf ("%s", n.string.c_str ());
       break;
     }
+  return &n;
+}
+
+node_ptr
+print::visit (identifier &n)
+{
+  printf ("%s", n.string.c_str ());
+  return &n;
+}
+
+node_ptr
+print::visit (yaccvar &n)
+{
+  printf ("%s", n.string.c_str ());
   return &n;
 }
 
@@ -203,6 +218,19 @@ print::visit (rule_alt &n)
 }
 
 node_ptr
+print::visit (rule_alt_part &n)
+{
+  resume (part);
+  if (n.name)
+    {
+      printf ("[");
+      resume (name);
+      printf ("]");
+    }
+  return &n;
+}
+
+node_ptr
 print::visit (nonterminal &n)
 {
   resume (nonterm);
@@ -217,12 +245,6 @@ print::visit (macro_call &n)
 {
   resume (macro);
   resume_if (args);
-  if (n.name)
-    {
-      printf ("[");
-      resume (name);
-      printf ("]");
-    }
   return &n;
 }
 

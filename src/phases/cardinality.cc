@@ -1,10 +1,6 @@
 #include "phase.h"
 
-#include <stdexcept>
-
 #include <boost/foreach.hpp>
-
-using namespace nodes;
 
 namespace
 {
@@ -38,8 +34,7 @@ cardinality::visit (nonterminal &n)
   BOOST_FOREACH (char cardinality, n.cardinality)
     if (cardinality)
       p = new macro_call
-        ( new token (TK_IDENTIFIER, cardinality_name (cardinality))
-        , (new macro_args)->add (p)
-        , 0);
+        ( make_token<TK_IDENTIFIER> (cardinality_name (cardinality))
+        , (new macro_args)->add (p));
   return p;
 }

@@ -16,7 +16,7 @@ using namespace nodes;
 %union {
   char character;
   nodes::node *node;
-  nodes::token *token;
+  tokens::token *token;
   nodes::node_list *list;
   nodes::macro_args *macro_args;
 }
@@ -71,10 +71,10 @@ using namespace nodes;
 %type<list> rule_rhs.2
 %type<list> rule_alt
 %type<node> rule_alt_part
+%type<node> named_rule_alt_part
 %type<node> nonterminal
 %type<character> cardinality
 %type<node> macro_call
-%type<token> name.opt
 %type<token> name
 %type<macro_args> macro_args.opt macro_args
 %type<token> macro_name
@@ -97,29 +97,29 @@ start
 	;
 
 documents
-	: document							{ ($$ = new documents)->add ($1); }
+	: document							{ ($$ = new documents)->add ($1)->loc = @$; }
 	| documents document						{ ($$ = $1)->add ($2); }
 	;
 
 document
-	: TK_CDECL options "%%" rules "%%" TK_CDECL			{ $$ = new document ($1, $2, $4, $6); delete $3; delete $5; }
+	: TK_CDECL options "%%" rules "%%" TK_CDECL			{ ($$ = new document ($1, $2, $4, $6))->loc = @$; delete $3; delete $5; }
 	;
 
 options
-	: /* empty */							{ $$ = new options; }
+	: /* empty */							{ ($$ = new options)->loc = @$; }
 	| options option						{ ($$ = $1)->add ($2); }
 	;
 
 option
-	: TK_DIRECTIVE							{ $$ = new directive ($1); }
-	| TK_DIRECTIVE TK_IDENTIFIER					{ $$ = new directive ($1, $2); }
-	| TK_DIRECTIVE TK_CDECL						{ $$ = new directive ($1, $2); }
-	| TK_DIRECTIVE TK_CDECL TK_TYPE					{ $$ = new directive ($1, $2, $3); }
-	| expect TK_INTEGER						{ $$ = new directive ($1, $2); }
-	| "%default-rule-type" TK_TYPE					{ $$ = new default_rule_type ($2); delete $1; }
-	| "%default-token-type" TK_TYPE					{ $$ = new default_token_type ($2); delete $1; }
-	| "%include-enum" TK_STRING TK_IDENTIFIER			{ $$ = new include_enum ($2, $3); delete $1; }
-	| "%token" type.opt TK_IDENTIFIER integer.opt string.opt	{ $$ = new token_decl ($2, $3, $4, $5); delete $1; }
+	: TK_DIRECTIVE							{ ($$ = new directive ($1))->loc = @$; }
+	| TK_DIRECTIVE TK_IDENTIFIER					{ ($$ = new directive ($1, $2))->loc = @$; }
+	| TK_DIRECTIVE TK_CDECL						{ ($$ = new directive ($1, $2))->loc = @$; }
+	| TK_DIRECTIVE TK_CDECL TK_TYPE					{ ($$ = new directive ($1, $2, $3))->loc = @$; }
+	| expect TK_INTEGER						{ ($$ = new directive ($1, $2))->loc = @$; }
+	| "%default-rule-type" TK_TYPE					{ ($$ = new default_rule_type ($2))->loc = @$; delete $1; }
+	| "%default-token-type" TK_TYPE					{ ($$ = new default_token_type ($2))->loc = @$; delete $1; }
+	| "%include-enum" TK_STRING TK_IDENTIFIER			{ ($$ = new include_enum ($2, $3))->loc = @$; delete $1; }
+	| "%token" type.opt TK_IDENTIFIER integer.opt string.opt	{ ($$ = new token_decl ($2, $3, $4, $5))->loc = @$; delete $1; }
 	;
 
 expect
@@ -143,16 +143,16 @@ string.opt
 	;
 
 rules
-	: rule								{ ($$ = new rules)->add ($1); }
+	: rule								{ ($$ = new rules)->add ($1)->loc = @$; }
 	| rules rule							{ ($$ = $1)->add ($2); }
 	;
 
 rule
-	: macro_call type.opt ':' rule_rhs ';'				{ $$ = new rule ($1, $2, $4); }
+	: macro_call type.opt ':' rule_rhs ';'				{ ($$ = new rule ($1, $2, $4))->loc = @$; }
 	;
 
 rule_rhs
-	: rule_alt							{ ($$ = new rule_rhs)->add ($1); }
+	: rule_alt							{ ($$ = new rule_rhs)->add ($1)->loc = @$; }
 	| rule_rhs.2
 	;
 
@@ -162,15 +162,25 @@ rule_rhs.2
 	;
 
 rule_alt
-	:								{ $$ = new rule_alt; }
-	| rule_alt rule_alt_part					{ ($$ = $1)->add ($2); }
+	:								{ ($$ = new rule_alt)->loc = @$; }
+	| rule_alt named_rule_alt_part					{ ($$ = $1)->add ($2); }
 	;
+
+named_rule_alt_part
+	: rule_alt_part							{ ($$ = new rule_alt_part ($1,  0))->loc = @$; }
+	| rule_alt_part name						{ ($$ = new rule_alt_part ($1, $2))->loc = @$; }
+	;
+
+name
+	: '[' TK_IDENTIFIER ']'						{ $$ = $2; }
+	;
+
 
 rule_alt_part
 	: nonterminal							{ $$ = $1; }
-	| nonterminal cardinality					{ $$ = new nonterminal ($1, $2,  0,  0); }
-	| nonterminal cardinality cardinality				{ $$ = new nonterminal ($1, $2, $3,  0); }
-	| nonterminal cardinality cardinality cardinality		{ $$ = new nonterminal ($1, $2, $3, $4); }
+	| nonterminal cardinality					{ ($$ = new nonterminal ($1, $2,  0,  0))->loc = @$; }
+	| nonterminal cardinality cardinality				{ ($$ = new nonterminal ($1, $2, $3,  0))->loc = @$; }
+	| nonterminal cardinality cardinality cardinality		{ ($$ = new nonterminal ($1, $2, $3, $4))->loc = @$; }
 	| '{' code '}'							{ $$ = $2; }
 	;
 
@@ -183,25 +193,16 @@ cardinality
 nonterminal
 	: macro_call							{ $$ = $1; }
 	| TK_CHARACTER							{ $$ = $1; }
-	| '(' rule_rhs.2 ')' type.opt					{ $$ = new anonymous_rule ($2, $4); }
+	| '(' rule_rhs.2 ')' type.opt					{ ($$ = new anonymous_rule ($2, $4))->loc = @$; }
 	;
 
 macro_call
-	: macro_name macro_args.opt name.opt				{ $$ = new macro_call ($1, $2, $3); }
+	: macro_name macro_args.opt					{ ($$ = new macro_call ($1, $2))->loc = @$; }
 	;
 
 macro_name
 	: TK_IDENTIFIER
 	| TK_STRING
-	;
-
-name.opt
-	: /* empty */							{ $$ = NULL; }
-	| name
-	;
-
-name
-	: '[' TK_IDENTIFIER ']'						{ $$ = $2; }
 	;
 
 macro_args.opt
@@ -215,12 +216,12 @@ ellipsis.opt
 	;
 
 macro_args
-	: macro_arg							{ ($$ = new macro_args)->add ($1); }
+	: macro_arg							{ ($$ = new macro_args)->add ($1)->loc = @$; }
 	| macro_args ',' macro_arg					{ ($$ = $1)->add ($3); }
 	;
 
 macro_arg
-	: named_arg.opt nonterminal					{ $$ = new macro_arg ($1, $2); }
+	: named_arg.opt nonterminal					{ ($$ = new macro_arg ($1, $2))->loc = @$; }
 	;
 
 named_arg.opt
@@ -233,7 +234,7 @@ named_arg
 	;
 
 code
-	: code_part							{ ($$ = new code)->add ($1); }
+	: code_part							{ ($$ = new code)->add ($1)->loc = @$; }
 	| code code_part						{ ($$ = $1)->add ($2); }
 	;
 

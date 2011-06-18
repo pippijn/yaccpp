@@ -2,8 +2,6 @@
 
 #include <boost/lexical_cast.hpp>
 
-using namespace nodes;
-
 namespace
 {
   struct anon_rules
@@ -43,7 +41,7 @@ anon_rules::visit (rule_rhs &n)
   if (in_rule_alt)
     {
       static int anon_idx = 1;
-      token_ptr name = new token (TK_IDENTIFIER, "_anon" + boost::lexical_cast<std::string> (anon_idx++));
+      token_ptr name = make_token<TK_IDENTIFIER> ("_anon" + boost::lexical_cast<std::string> (anon_idx++));
       cur_rule = new rule (name, 0, &n);
       return name;
     }

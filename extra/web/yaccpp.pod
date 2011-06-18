@@ -218,8 +218,8 @@ As a form of abbreviation, you may use variable references on the rhs of a rule.
 
    asm.statement
       : "ASM" type.qualifier '(' string.literal.list
-        ':' asm.argument.list[L]? // define a named component
-        ':' $L? // refer to it here
+        ':' asm.argument.list?[L] // define a named component
+        ':' $L // refer to it here
         ':' asm.clobbered.list ')' ';'
 
 =end code CPP

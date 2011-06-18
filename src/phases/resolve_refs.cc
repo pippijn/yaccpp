@@ -1,8 +1,11 @@
 #include "phase.h"
 
+#include <algorithm>
+#include <vector>
+
 namespace
 {
-  struct nop
+  struct resolve_refs
     : visitor
   {
     node_ptr visit (token &n);
@@ -26,133 +29,149 @@ namespace
     node_ptr visit (macro_args &n);
     node_ptr visit (macro_arg &n);
     node_ptr visit (code &n);
+
+    std::vector<node_ptr> refs;
   };
 
-  static phase<nop> thisphase ("nop");
+  static phase<resolve_refs> thisphase ("resolve_refs");
 }
 
 node_ptr
-nop::visit (token &n)
+resolve_refs::visit (token &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (identifier &n)
+resolve_refs::visit (identifier &n)
+{
+  if (std::find (refs.begin (), refs.end (), &n) != refs.end ())
+    throw semantic_error (refs, "variable `" + n.string + "' references itself (eventually)");
+  if (n.ref)
+    {
+      refs.push_back (&n);
+      resume (ref);
+      refs.pop_back ();
+      return n.ref;
+    }
+  return visitor::visit (n);
+}
+
+node_ptr
+resolve_refs::visit (yaccvar &n)
+{
+  if (n.ref)
+    {
+      resume (ref);
+      return n.ref;
+    }
+  return visitor::visit (n);
+}
+
+node_ptr
+resolve_refs::visit (documents &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (yaccvar &n)
+resolve_refs::visit (document &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (documents &n)
+resolve_refs::visit (options &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (document &n)
+resolve_refs::visit (directive &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (options &n)
+resolve_refs::visit (default_rule_type &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (directive &n)
+resolve_refs::visit (default_token_type &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (default_rule_type &n)
+resolve_refs::visit (include_enum &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (default_token_type &n)
+resolve_refs::visit (token_decl &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (include_enum &n)
+resolve_refs::visit (rules &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (token_decl &n)
+resolve_refs::visit (rule &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (rules &n)
+resolve_refs::visit (rule_rhs &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (rule &n)
+resolve_refs::visit (rule_alt &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (rule_rhs &n)
+resolve_refs::visit (nonterminal &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (rule_alt &n)
+resolve_refs::visit (anonymous_rule &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (nonterminal &n)
+resolve_refs::visit (macro_call &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (anonymous_rule &n)
+resolve_refs::visit (macro_args &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (macro_call &n)
+resolve_refs::visit (macro_arg &n)
 {
   return visitor::visit (n);
 }
 
 node_ptr
-nop::visit (macro_args &n)
-{
-  return visitor::visit (n);
-}
-
-node_ptr
-nop::visit (macro_arg &n)
-{
-  return visitor::visit (n);
-}
-
-node_ptr
-nop::visit (code &n)
+resolve_refs::visit (code &n)
 {
   return visitor::visit (n);
 }

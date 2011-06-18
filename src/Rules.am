@@ -1,12 +1,16 @@
 bin_PROGRAMS = yaccpp
 
 yaccpp_SOURCES =	\
+	exception.cc	\
 	lexer.cc	\
 	main.cc		\
+	make_token.cc	\
 	node.cc		\
 	parser.cc	\
 	phases.cc	\
 	sighandler.cc	\
+	symtab.cc	\
+	token.cc	\
 	visitor.cc	\
 	yylex.ll	\
 	yyparse.yy

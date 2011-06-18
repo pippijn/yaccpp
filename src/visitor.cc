@@ -3,12 +3,26 @@
 #include "visitor.h"
 
 using namespace nodes;
+using namespace tokens;
 
 node_ptr
 visitor::visit (token &n)
 {
   return &n;
 }
+
+node_ptr
+visitor::visit (identifier &n)
+{
+  return &n;
+}
+
+node_ptr
+visitor::visit (yaccvar &n)
+{
+  return &n;
+}
+
 
 node_ptr
 visitor::visit (documents &n)
@@ -107,6 +121,14 @@ visitor::visit (rule_alt &n)
 }
 
 node_ptr
+visitor::visit (rule_alt_part &n)
+{
+  resume (part);
+  resume_if (name);
+  return &n;
+}
+
+node_ptr
 visitor::visit (nonterminal &n)
 {
   resume (nonterm);
@@ -126,7 +148,6 @@ visitor::visit (macro_call &n)
 {
   resume (macro);
   resume_if (args);
-  resume_if (name);
   return &n;
 }
 

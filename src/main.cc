@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <clocale>
 #include <cstdlib>
+#include <stdexcept>
 
 int
 main (int argc, char *argv[])
@@ -42,6 +43,9 @@ try
       phases::run ("nop", doc);
       phases::run ("anon_rules", doc);
       phases::run ("cardinality", doc);
+      phases::run ("insert_syms", doc);
+      phases::run ("scobind", doc);
+      phases::run ("resolve_refs", doc);
       phases::run ("print", doc);
     }
   else
@@ -51,8 +55,13 @@ try
 
   return EXIT_SUCCESS;
 }
+catch (std::runtime_error const &e)
+{
+  printf ("runtime error: %s\n", e.what ());
+  return EXIT_FAILURE;
+}
 catch (std::exception const &e)
 {
-  printf ("error: %s\n", e.what ());
+  puts (e.what ());
   return EXIT_FAILURE;
 }

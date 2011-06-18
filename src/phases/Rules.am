@@ -1,5 +1,9 @@
 yaccpp_SOURCES +=	\
 	anon_rules.cc	\
 	cardinality.cc	\
+	insert_syms.cc	\
+	is_ref.h	\
 	nop.cc		\
-	print.cc
+	print.cc	\
+	resolve_refs.cc	\
+	scobind.cc

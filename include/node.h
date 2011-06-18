@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <list>
+#include <string>
 
 #include "visitor.h"
 
@@ -24,17 +24,19 @@ namespace nodes
     node () : refcnt (0) { }
     virtual ~node () { }
 
-    friend void intrusive_ptr_release (node *n);
-    friend void intrusive_ptr_add_ref (node *n);
+    template<typename T>
+    T &as ()
+    {
+      return dynamic_cast<T &> (*this);
+    }
 
     void *operator new (size_t bytes);
     void operator delete (void *ptr, size_t bytes);
 
-  private:
+    YYLTYPE loc;
     int refcnt;
   };
 
-  typedef boost::intrusive_ptr<struct node_list> node_list_ptr;
   struct node_list
     : node
   {
@@ -50,35 +52,13 @@ namespace nodes
     Derived *add (node_ptr n) { list.push_back (n); return static_cast<Derived *> (this); }
   };
 
-  typedef boost::intrusive_ptr<struct token> token_ptr;
-  struct token
-    : node
-  {
-    virtual node_ptr accept (visitor &v) { return v.visit (*this); }
-    token (int tok, char const *text, int leng)
-      : tok (tok)
-      , string (text, leng)
-    {
-    }
-    token (int tok, std::string const &string)
-      : tok (tok)
-      , string (string)
-    {
-    }
 
-    int const tok;
-    std::string const string;
-  };
-
-
-  typedef boost::intrusive_ptr<struct documents> documents_ptr;
   struct documents
     : node_list_t<documents>
   {
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
   };
   
-  typedef boost::intrusive_ptr<struct document> document_ptr;
   struct document
     : node
   {
@@ -91,14 +71,12 @@ namespace nodes
     node_ptr epilogue;
   };
 
-  typedef boost::intrusive_ptr<struct options> options_ptr;
   struct options
     : node_list_t<options>
   {
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
   };
   
-  typedef boost::intrusive_ptr<struct directive> directive_ptr;
   struct directive
     : node
   {
@@ -111,7 +89,6 @@ namespace nodes
     node_ptr a3;
   };
   
-  typedef boost::intrusive_ptr<struct default_rule_type> default_rule_type_ptr;
   struct default_rule_type
     : node
   {
@@ -121,7 +98,6 @@ namespace nodes
     node_ptr type;
   };
   
-  typedef boost::intrusive_ptr<struct default_token_type> default_token_type_ptr;
   struct default_token_type
     : node
   {
@@ -131,7 +107,6 @@ namespace nodes
     node_ptr type;
   };
   
-  typedef boost::intrusive_ptr<struct include_enum> include_enum_ptr;
   struct include_enum
     : node
   {
@@ -142,7 +117,6 @@ namespace nodes
     node_ptr id;
   };
   
-  typedef boost::intrusive_ptr<struct token_decl> token_decl_ptr;
   struct token_decl
     : node
   {
@@ -155,14 +129,12 @@ namespace nodes
     node_ptr desc;
   };
   
-  typedef boost::intrusive_ptr<struct rules> rules_ptr;
   struct rules
     : node_list_t<rules>
   {
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
   };
   
-  typedef boost::intrusive_ptr<struct rule> rule_ptr;
   struct rule
     : node
   {
@@ -174,21 +146,28 @@ namespace nodes
     node_ptr rhs;
   };
   
-  typedef boost::intrusive_ptr<struct rule_rhs> rule_rhs_ptr;
   struct rule_rhs
     : node_list_t<rule_rhs>
   {
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
   };
   
-  typedef boost::intrusive_ptr<struct rule_alt> rule_alt_ptr;
   struct rule_alt
     : node_list_t<rule_alt>
   {
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
   };
   
-  typedef boost::intrusive_ptr<struct nonterminal> nonterminal_ptr;
+  struct rule_alt_part
+    : node
+  {
+    virtual node_ptr accept (visitor &v) { return v.visit (*this); }
+    rule_alt_part (node_ptr part, node_ptr name) : part (part), name (name) { }
+
+    node_ptr part;
+    node_ptr name;
+  };
+  
   struct nonterminal
     : node
   {
@@ -205,7 +184,6 @@ namespace nodes
     short cardinality[3];
   };
   
-  typedef boost::intrusive_ptr<struct nonterminal> anonymous_rule_ptr;
   struct anonymous_rule
     : node
   {
@@ -216,19 +194,16 @@ namespace nodes
     node_ptr type;
   };
   
-  typedef boost::intrusive_ptr<struct macro_call> macro_call_ptr;
   struct macro_call
     : node
   {
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
-    macro_call (node_ptr macro, node_ptr args, node_ptr name) : macro (macro), args (args), name (name) { }
+    macro_call (node_ptr macro, node_ptr args) : macro (macro), args (args) { }
 
     node_ptr macro;
     node_ptr args;
-    node_ptr name;
   };
   
-  typedef boost::intrusive_ptr<struct macro_args> macro_args_ptr;
   struct macro_args
     : node_list_t<macro_args>
   {
@@ -238,7 +213,6 @@ namespace nodes
     bool is_variadic;
   };
   
-  typedef boost::intrusive_ptr<struct macro_arg> macro_arg_ptr;
   struct macro_arg
     : node
   {
@@ -249,13 +223,57 @@ namespace nodes
     node_ptr arg;
   };
   
-  typedef boost::intrusive_ptr<struct code> code_ptr;
   struct code
     : node_list_t<code>
   {
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
   };
 }
+
+namespace tokens
+{
+  struct token
+    : nodes::node
+  {
+    virtual nodes::node_ptr accept (nodes::visitor &v) { return v.visit (*this); }
+    token (int tok, std::string const &string)
+      : tok (tok)
+      , string (string)
+    {
+    }
+
+    int const tok;
+    std::string const string;
+  };
+
+  struct identifier
+    : token
+  {
+    virtual nodes::node_ptr accept (nodes::visitor &v) { return v.visit (*this); }
+    identifier (std::string const &string);
+
+    nodes::node_ptr ref;
+  };
+
+  struct yaccvar
+    : token
+  {
+    virtual nodes::node_ptr accept (nodes::visitor &v) { return v.visit (*this); }
+    yaccvar (std::string const &string);
+
+    nodes::node_ptr ref;
+  };
+
+  template<short Tok>
+  token *make_token (std::string const &string);
+
+  template<short Tok>
+  token *make_token (char const *text, int leng)
+  {
+    return make_token<Tok> (std::string (text, leng));
+  }
+}
+
 
 using nodes::node;
 using nodes::node_ptr;

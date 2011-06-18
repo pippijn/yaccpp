@@ -17,11 +17,13 @@
 #define Return(TOK)					\
   do {							\
     if (!SELF->tmp.empty ())				\
-      yylval->token					\
-        = new nodes::token (TOK, SELF->text ());	\
+      (yylval->token					\
+        = tokens::make_token<TOK> (SELF->text ()))	\
+	->loc = *yylloc;				\
     else						\
-      yylval->token					\
-        = new nodes::token (TOK, yytext, yyleng);	\
+      (yylval->token					\
+        = tokens::make_token<TOK> (yytext, yyleng))	\
+	->loc = *yylloc;				\
     return TOK;						\
   } while (0)						\
 
