@@ -16,7 +16,7 @@ not get in the way. Yaccpp is still about writing grammars, not programs.
 
 =head2 // Comments
 
-Yacc allows /* */ comments. Yaccpp also allows C99-style // comments.
+Yacc allows C</* */> comments. Yaccpp also allows C99-style C<//> comments.
 
 =head2 Generate foreign language actions
 
