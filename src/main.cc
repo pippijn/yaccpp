@@ -10,6 +10,8 @@
 #include <cstdlib>
 #include <stdexcept>
 
+#include <boost/foreach.hpp>
+
 int
 main (int argc, char *argv[])
 try
@@ -40,18 +42,35 @@ try
 
   if (node_ptr doc = parse ())
     {
+      phases::run ("xmlprint", doc);
+      return EXIT_SUCCESS;
       phases::run ("nop", doc);
       phases::run ("anon_rules", doc);
       phases::run ("cardinality", doc);
       phases::run ("insert_syms", doc);
       phases::run ("scobind", doc);
       phases::run ("resolve_refs", doc);
+      phases::run ("call_macros", doc);
       phases::run ("print", doc);
     }
   else
     {
       return EXIT_FAILURE;
     }
+
+#if 0
+  BOOST_FOREACH (node *n, node::nodes)
+    printf ("%p : %d\n", n, n ? n->index : -1);
+#endif
+
+  assert (node::audit_hash ());
+  node::compress_hash ();
+  assert (node::audit_hash ());
+
+#if 0
+  BOOST_FOREACH (node *n, node::nodes)
+    printf ("%p : %d\n", n, n ? n->index : -1);
+#endif
 
   return EXIT_SUCCESS;
 }

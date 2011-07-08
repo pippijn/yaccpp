@@ -15,17 +15,7 @@
   }
 
 #define Return(TOK)					\
-  do {							\
-    if (!SELF->tmp.empty ())				\
-      (yylval->token					\
-        = tokens::make_token<TOK> (SELF->text ()))	\
-	->loc = *yylloc;				\
-    else						\
-      (yylval->token					\
-        = tokens::make_token<TOK> (yytext, yyleng))	\
-	->loc = *yylloc;				\
-    return TOK;						\
-  } while (0)						\
+  return SELF->make_token<TOK> (yytext, yyleng, yylval, yylloc)
 
 #define PUSH(STATE)	yy_push_state (STATE, yyscanner)
 #define POP()		yy_pop_state (yyscanner)
@@ -164,4 +154,19 @@ lexer::cond ()
 {
   yyguts_t *yyg = (yyguts_t *)lex;
   return YY_START;
+}
+
+template<short Tok>
+inline short
+lexer::make_token (char const *text, int leng, YYSTYPE *lval, YYLTYPE *lloc)
+{
+  if (!tmp.empty ())
+    (lval->token
+       = tokens::make_token<Tok> (this->text ()))
+       ->loc = *lloc;
+  else
+    (lval->token
+       = tokens::make_token<Tok> (text, leng))
+       ->loc = *lloc;
+  return Tok;
 }

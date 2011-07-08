@@ -18,6 +18,8 @@ struct lexer
 
   void append (char const *text, int leng) { tmp.append (text, leng); }
   std::string text () { std::string s = tmp; tmp.clear (); return s; }
+  template<short Tok>
+  short make_token (char const *text, int leng, YYSTYPE *lval, YYLTYPE *lloc);
 
   void *lex;
   YYLTYPE *loc;

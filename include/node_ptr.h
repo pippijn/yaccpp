@@ -47,4 +47,16 @@ namespace tokens
   NODE (token);
   NODE (identifier);
   NODE (yaccvar);
+
+  template<short Tok>
+  token *make_token (char const *text, int leng);
+}
+
+template<typename T>
+boost::intrusive_ptr<T>
+move (boost::intrusive_ptr<T> &p)
+{
+  boost::intrusive_ptr<T> r;
+  swap (r, p);
+  return r;
 }

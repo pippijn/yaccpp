@@ -2,6 +2,7 @@
 
 #include <list>
 #include <string>
+#include <vector>
 
 #include "visitor.h"
 
@@ -20,9 +21,10 @@ namespace nodes
 {
   struct node
   {
+    virtual char const *node_type () const = 0;
     virtual node_ptr accept (visitor &v) = 0;
-    node () : refcnt (0) { }
-    virtual ~node () { }
+    node ();
+    virtual ~node ();
 
     template<typename T>
     T &as ()
@@ -35,6 +37,11 @@ namespace nodes
 
     YYLTYPE loc;
     int refcnt;
+    int index;
+
+    static std::vector<node *> nodes;
+    static void compress_hash ();
+    static bool audit_hash ();
   };
 
   struct node_list
@@ -56,12 +63,14 @@ namespace nodes
   struct documents
     : node_list_t<documents>
   {
+    virtual char const *node_type () const { return "documents"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
   };
   
   struct document
     : node
   {
+    virtual char const *node_type () const { return "document"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
     document (node_ptr prologue, node_ptr options, node_ptr rules, node_ptr epilogue) : prologue (prologue), options (options), rules (rules), epilogue (epilogue) { }
 
@@ -74,12 +83,14 @@ namespace nodes
   struct options
     : node_list_t<options>
   {
+    virtual char const *node_type () const { return "options"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
   };
   
   struct directive
     : node
   {
+    virtual char const *node_type () const { return "directive"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
     directive (node_ptr dir, node_ptr a1 = 0, node_ptr a2 = 0, node_ptr a3 = 0) : dir (dir), a1 (a1), a2 (a2), a3 (a3) { }
 
@@ -92,6 +103,7 @@ namespace nodes
   struct default_rule_type
     : node
   {
+    virtual char const *node_type () const { return "default_rule_type"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
     default_rule_type (node_ptr type) : type (type) { }
 
@@ -101,6 +113,7 @@ namespace nodes
   struct default_token_type
     : node
   {
+    virtual char const *node_type () const { return "default_token_type"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
     default_token_type (node_ptr type) : type (type) { }
 
@@ -110,6 +123,7 @@ namespace nodes
   struct include_enum
     : node
   {
+    virtual char const *node_type () const { return "include_enum"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
     include_enum (node_ptr file, node_ptr id) : file (file), id (id) { }
 
@@ -120,6 +134,7 @@ namespace nodes
   struct token_decl
     : node
   {
+    virtual char const *node_type () const { return "token_decl"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
     token_decl (node_ptr type, node_ptr name, node_ptr num, node_ptr desc) : type (type), name (name), num (num), desc (desc) { }
 
@@ -132,12 +147,14 @@ namespace nodes
   struct rules
     : node_list_t<rules>
   {
+    virtual char const *node_type () const { return "rules"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
   };
   
   struct rule
     : node
   {
+    virtual char const *node_type () const { return "rule"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
     rule (node_ptr nonterm, node_ptr type, node_ptr rhs) : nonterm (nonterm), type (type), rhs (rhs) { }
 
@@ -149,18 +166,21 @@ namespace nodes
   struct rule_rhs
     : node_list_t<rule_rhs>
   {
+    virtual char const *node_type () const { return "rule_rhs"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
   };
   
   struct rule_alt
     : node_list_t<rule_alt>
   {
+    virtual char const *node_type () const { return "rule_alt"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
   };
   
   struct rule_alt_part
     : node
   {
+    virtual char const *node_type () const { return "rule_alt_part"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
     rule_alt_part (node_ptr part, node_ptr name) : part (part), name (name) { }
 
@@ -171,6 +191,7 @@ namespace nodes
   struct nonterminal
     : node
   {
+    virtual char const *node_type () const { return "nonterminal"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
     nonterminal (node_ptr nonterm, char c1, char c2, char c3)
       : nonterm (nonterm)
@@ -187,6 +208,7 @@ namespace nodes
   struct anonymous_rule
     : node
   {
+    virtual char const *node_type () const { return "anonymous_rule"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
     anonymous_rule (node_ptr rule, node_ptr type) : rule (rule), type (type) { }
 
@@ -197,6 +219,7 @@ namespace nodes
   struct macro_call
     : node
   {
+    virtual char const *node_type () const { return "macro_call"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
     macro_call (node_ptr macro, node_ptr args) : macro (macro), args (args) { }
 
@@ -207,6 +230,7 @@ namespace nodes
   struct macro_args
     : node_list_t<macro_args>
   {
+    virtual char const *node_type () const { return "macro_args"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
     macro_args () : is_variadic (false) { }
 
@@ -216,6 +240,7 @@ namespace nodes
   struct macro_arg
     : node
   {
+    virtual char const *node_type () const { return "macro_arg"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
     macro_arg (node_ptr name, node_ptr arg) : name (name), arg (arg) { }
 
@@ -226,6 +251,7 @@ namespace nodes
   struct code
     : node_list_t<code>
   {
+    virtual char const *node_type () const { return "code"; }
     virtual node_ptr accept (visitor &v) { return v.visit (*this); }
   };
 }
@@ -235,6 +261,7 @@ namespace tokens
   struct token
     : nodes::node
   {
+    virtual char const *node_type () const { return "token"; }
     virtual nodes::node_ptr accept (nodes::visitor &v) { return v.visit (*this); }
     token (int tok, std::string const &string)
       : tok (tok)
@@ -249,6 +276,7 @@ namespace tokens
   struct identifier
     : token
   {
+    virtual char const *node_type () const { return "identifier"; }
     virtual nodes::node_ptr accept (nodes::visitor &v) { return v.visit (*this); }
     identifier (std::string const &string);
 
@@ -258,6 +286,7 @@ namespace tokens
   struct yaccvar
     : token
   {
+    virtual char const *node_type () const { return "yaccvar"; }
     virtual nodes::node_ptr accept (nodes::visitor &v) { return v.visit (*this); }
     yaccvar (std::string const &string);
 

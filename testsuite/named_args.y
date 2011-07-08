@@ -4,7 +4,7 @@
 %start start
 
 %%
-start
-	: (a | b $$)[L] c $L
+named_args
+	: opt(E: start)
 	;
 %%

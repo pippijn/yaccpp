@@ -46,15 +46,17 @@ start symbol name, thus creating a kind of scope.
 
 =head2 Automatic parse tree generation
 
-Yaccpp can generate parse tree classes for C++ or structs for C. These represent
-the original grammar structure rather than the expanded grammar. Note that
-unlike abstract syntax trees (ASTs), the parse tree contains everything,
-including all tokens such as C<'+'>, C<';'> and C<'{'> tokens. The class members
-will carry the names of the rhs parts. If more than one rhs part has the same
-name, an 1-based index is appended.
+Yaccpp can generate parse tree classes for C++ or structs for C using the
+C<%parse-tree> directive. These represent the original grammar structure rather
+than the expanded grammar. Note that unlike abstract syntax trees (ASTs), the
+parse tree contains everything, including all tokens such as C<'+'>, C<';'> and
+C<'{'> tokens. The class members will carry the names of the rhs parts. If more
+than one rhs part has the same name, an 1-based index is appended.
 
 =begin code CPP
 
+   %parse-tree "C++"
+   %%
    add_exp
       : mul_exp
       | add_exp '+' mul_exp %class add_exp
@@ -104,7 +106,7 @@ paper.
 
 In addition to the expansion described in the paper, Yaccpp supports higher
 order programming by passing unexpanded macro names to other macros. These
-macros can then expand the passed macro.
+macros can then be expanded within the other macro.
 
 =head3 Currying and variadic macros
 
@@ -217,7 +219,7 @@ As a form of abbreviation, you may use variable references on the rhs of a rule.
       ;
 
    asm.statement
-      : "ASM" type.qualifier '(' string.literal.list
+      : "asm" type.qualifier '(' string.literal.list
         ':' asm.argument.list?[L] // define a named component
         ':' $L // refer to it here
         ':' asm.clobbered.list ')' ';'
@@ -254,7 +256,11 @@ right hand side of rules.
 =end code CPP
 
 As a generic tool, Yaccpp cannot know how you want to handle lists and optional
-elements, it requires the grammar to contain the following definitions:
+elements, it requires the grammar to contain the following definitions. Defaults
+are provided, if a definition is not given. The list macros do not, however, know how to
+handle their values and therefore do not have a type, unless the automatic tree
+generation feature is used, in which case a list implementation is provided and
+used (C<std::list> for C++, a custom list implementation for C).
 
 =over
 
