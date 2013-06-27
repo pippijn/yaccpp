@@ -1,4 +1,0 @@
-yaccpp
-======
-
-YACC macro preprocessor
