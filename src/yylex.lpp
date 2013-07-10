@@ -23,7 +23,7 @@
 %}
 
 %option prefix="yy"
-%option header-file="yylex.h"
+%option header-file="yylex.hpp"
 %option bison-locations
 %option reentrant
 /*%option ecs full 8bit*/

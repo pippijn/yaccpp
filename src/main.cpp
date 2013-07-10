@@ -1,5 +1,3 @@
-#include "config.h"
-
 #include "lexer.h"
 #include "parser.h"
 #include "phases.h"
@@ -21,7 +19,7 @@ try
 
   if (!strcmp (argv[1], "--version"))
     {
-      puts (PACKAGE_NAME " v" PACKAGE_VERSION);
+      puts ("yaccpp v0.1");
       return EXIT_SUCCESS;
     }
 

@@ -8,11 +8,12 @@
 
 struct YYLTYPE
 {
-  std::string const *file;
   int first_line;
   int first_column;
   int last_line;
   int last_column;
+
+  std::string const *file;
 };
 #define YYLTYPE_IS_DECLARED 1
 #define YYLTYPE_IS_TRIVIAL 1
