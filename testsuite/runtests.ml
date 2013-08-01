@@ -3,10 +3,9 @@
 (* +=====~~~-------------------------------------------------------~~~=====+ *)
 
 TestFramework.(run "testsuite" [
-  {
+  { empty with
     tool = "yaccpp";
     suffixes = [".y"; ".yy"];
-    options = None;
     dirs = [
       "yaccpp";
     ];
