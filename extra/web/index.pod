@@ -4,7 +4,7 @@ The C<yaccpp> project is a preprocessor for YACC/Bison grammars.
 
 =cut
 
-L<Git repository|http://xinutec.org/git/lang/yaccpp.git/>
+L<Git repository|https://github.com/pippijn/yaccpp>
 
 =pod
 
@@ -20,7 +20,7 @@ Yacc allows C</* */> comments. Yaccpp also allows C99-style C<//> comments.
 
 =head2 Generate foreign language actions
 
-If a foreign language such as L<Aldor|aldor> or Perl includes a C FFI, Yaccpp
+If a foreign language such as L<Aldor|aldor/> or Perl includes a C FFI, Yaccpp
 can generate calls into this language, so that actions can be written in a non-C
 language while keeping the parser implementation in C. This way, new languages
 can get a well-tested parser generator without having to write their own Bison
