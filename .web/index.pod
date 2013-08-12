@@ -20,20 +20,21 @@ Yacc allows C</* */> comments. Yaccpp also allows C99-style C<//> comments.
 
 =head2 Generate foreign language actions
 
-If a foreign language such as L<Aldor|aldor/> or Perl includes a C FFI, Yaccpp
-can generate calls into this language, so that actions can be written in a non-C
-language while keeping the parser implementation in C. This way, new languages
-can get a well-tested parser generator without having to write their own Bison
-template. A Perl module or Aldor domain will be generated to encapsulate the
-action code. This feature can be controlled using the C<%action-lang> directive.
+If a foreign language such as L<Aldor|../aldor/> or Perl includes a C FFI,
+Yaccpp can generate calls into this language, so that actions can be written in
+a non-C language while keeping the parser implementation in C. This way, new
+languages can get a well-tested parser generator without having to write their
+own Bison template. A Perl module or Aldor domain will be generated to
+encapsulate the action code. This feature can be controlled using the
+C<%action-lang> directive.
 
-=begin code CPP
+=begin code cpp
 
    %action-lang "Aldor" MyLanguageParserDom
    // or:
    %action-lang "Perl" Parse::MyLanguage
 
-=end code CPP
+=end code
 
 
 =head2 Merge multiple input files
@@ -53,7 +54,7 @@ parse tree contains everything, including all tokens such as C<'+'>, C<';'> and
 C<'{'> tokens. The class members will carry the names of the rhs parts. If more
 than one rhs part has the same name, an 1-based index is appended.
 
-=begin code CPP
+=begin code cpp
 
    %parse-tree "C++"
    %%
@@ -63,7 +64,7 @@ than one rhs part has the same name, an 1-based index is appended.
       | add_exp '-' mul_exp %class add_exp
       ;
 
-=end code CPP
+=end code
 
 The above grammar productions will yield two classes. By using the C<%class>
 directive, the common productions are written directly in the base class
@@ -74,13 +75,13 @@ If C<%class> is omitted, each production will get its own class,
 unless a pattern can be detected. If C<%class> had been omitted in the above
 example, the three classes would be:
 
-=begin code CPP
+=begin code cpp
 
    add_exp_node <<abstract>>
    add_exp_node1 : add_exp_node { node *mul_exp; };
    add_exp_node2 : add_exp_node { node *add_exp, *tok, *mul_exp; };
 
-=end code CPP
+=end code
 
 
 =head2 Expand macro grammars
@@ -89,7 +90,7 @@ Yaccpp implements a variant of macro grammars as described in Peter Thiemann's
 L<Macros for Context-Free Grammars|http://www.informatik.uni-freiburg.de/~thiemann/papers/macro-grammar.pdf>
 paper.
 
-=begin code CPP
+=begin code cpp
 
    // E (sep E)*
    list(E, sep, list_type)
@@ -102,7 +103,7 @@ paper.
 
    argument_list: '(' list (argument, ';', node_list) ')';
 
-=end code CPP
+=end code
 
 In addition to the expansion described in the paper, Yaccpp supports higher
 order programming by passing unexpanded macro names to other macros. These
@@ -117,7 +118,7 @@ of a parameter list, a macro may accept any number of arguments. Overloading
 resolution will select L<variadic|http://en.wikipedia.org/wiki/Variadic_function>
 macros only if there is no overload with the exact number of parameters.
 
-=begin code CPP
+=begin code cpp
 
    opt(E)
       : /* empty */
@@ -134,17 +135,17 @@ macros only if there is no overload with the exact number of parameters.
       : opt(E: expr) // named arguments
       ;
 
-=end code CPP
+=end code
 
 Variadic arguments can not be directly expanded in the grammar. If you need a
 space separated list of all arguments passed to a macro, you will need to use
 something like this:
 
-=begin code CPP
+=begin code cpp
 
    expand(arg, rest...): arg expand(rest...);
 
-=end code CPP
+=end code
 
 =head3 Specialisation (@spec)
 
@@ -152,7 +153,7 @@ Sometimes you may want to specialise a generic macro by production. Macros can
 be specialised by overloading them and defining one or more of its arguments
 with a production name.
 
-=begin code CPP
+=begin code cpp
 
    // Generic list macro for the + operator
    list.1(E)
@@ -166,14 +167,14 @@ with a production name.
       | list.1(E) E ';'
       ;
 
-=end code CPP
+=end code
 
 =head3 Pattern matching
 
 Macros can not only be specialised with production names, but also with ML-style
 patterns.
 
-=begin code CPP
+=begin code cpp
 
    // specialise the '+' macro for list of optional statements
    list.1(E: opt(E: statement))
@@ -192,7 +193,7 @@ patterns.
       | notopt(expression) // => expression
       ;
 
-=end code CPP
+=end code
 
 =head3 Analysis
 
@@ -205,7 +206,7 @@ macros defined inline in an argument list are not supported.
 
 As a form of abbreviation, you may use variable references on the rhs of a rule.
 
-=begin code CPP
+=begin code cpp
 
    some_macro(with,many,arguments,it,would,be,unfeasible,to,write,it,again)
       : $$ with it
@@ -224,7 +225,7 @@ As a form of abbreviation, you may use variable references on the rhs of a rule.
         ':' $L // refer to it here
         ':' asm.clobbered.list ')' ';'
 
-=end code CPP
+=end code
 
 
 =head2 Regular grammars on the rhs
@@ -232,7 +233,7 @@ As a form of abbreviation, you may use variable references on the rhs of a rule.
 Yaccpp supports regular grammars known from regular expressions and EBNF on the
 right hand side of rules.
 
-=begin code CPP
+=begin code cpp
 
    identifier
       // Note that you need to write out the "..." yourself. Character ranges
@@ -253,7 +254,7 @@ right hand side of rules.
    nonterm: list.0 (macro__anon123);
    nonterm: list.0__macro__anon123;
 
-=end code CPP
+=end code
 
 As a generic tool, Yaccpp cannot know how you want to handle lists and optional
 elements, it requires the grammar to contain the following definitions. Defaults
@@ -285,7 +286,7 @@ in anonymous rules just as you would in global rules. If all alternatives have
 the same type, the type of the anonymous rule is inferred to be that type.
 Otherwise, you need to specify the type, explicitly.
 
-=begin code CPP
+=begin code cpp
 
    // OK: all alternatives have the same type; $1's type is "token"
    local: (alt1 | alt2) { $$ = $1; } // this is implicit
@@ -302,7 +303,7 @@ Otherwise, you need to specify the type, explicitly.
    alt1<node>: funcall;
    alt2<token>: TK_IDENTIFIER;
 
-=end code CPP
+=end code
 
 =back
 
@@ -312,7 +313,7 @@ Otherwise, you need to specify the type, explicitly.
 Added in Bison 2.5, this feature is very useful for long rules. Especially when
 these rules change a lot, it is easy to make a mistake in counting the indices.
 
-=begin code CPP
+=begin code cpp
 
    funcall: id '(' args ')'
          { $funcall = new funcall ($id, $args); }
@@ -320,7 +321,7 @@ these rules change a lot, it is easy to make a mistake in counting the indices.
    addition: exp[left] '+' exp[right-side]
          { $$ = $left + $[right-side]; } // use [] because the name has a - in it
 
-=end code CPP
+=end code
 
 See the L<Bison manual|http://www.gnu.org/software/bison/manual/bison.html#Named-References>
 for more examples and details.
@@ -335,12 +336,12 @@ C<#define> list from the grammar and use that in the scanner. Using
 C<%include-enum>, both use the same external token information source without
 depending on each other.
 
-=begin code CPP
+=begin code cpp
 
    // we import symbols from "enum token_type" in "tokens.h":
    %include-enum "tokens.h" token_type
 
-=end code CPP
+=end code
 
 
 =head2 Specify types on lhs of rules
@@ -349,7 +350,7 @@ Defining the types at the top of a grammar file splits information about rules
 in two parts: the type information and the actual rule. In Yaccpp, you can
 declare the type on the nonterminal you are defining.
 
-=begin code CPP
+=begin code cpp
 
    add_exp<add_exp_node>: exp + exp ;
    // becomes
@@ -357,7 +358,7 @@ declare the type on the nonterminal you are defining.
    %%
    add_exp: exp + exp ;
 
-=end code CPP
+=end code
 
 If you split the definition of a nonterminal into several separate rules, you
 only need to define the type on one of them. Defining a different type on the
@@ -369,7 +370,7 @@ Using the C<%default-token-type>, you can specify the type to be used on tokens
 read from the included enum. They may be overridden using the C<%token> directive.
 The C<%default-rule-type> defines the default type of lhs symbols.
 
-=begin code CPP
+=begin code cpp
 
    %default-rule-type <ast_node>
    %%
@@ -380,7 +381,7 @@ The C<%default-rule-type> defines the default type of lhs symbols.
    %%
    decls: decl | decls decl ;
 
-=end code CPP
+=end code
 
 You may override the type analogously to the token types.
 
@@ -390,7 +391,7 @@ You may override the type analogously to the token types.
 You may refer to the type of any typed nonterminal or terminal using the new
 C<#> symbol.
 
-=begin code CPP
+=begin code cpp
 
    %type<funcall_node> funcall
    %%
@@ -401,12 +402,12 @@ C<#> symbol.
    funcall: id '(' args ')'
          { $$ = new funcall_node ($1, $3); }
 
-=end code CPP
+=end code
 
 You may also refer to the types of rhs symbols, which may be useful in template
 instantiations.
 
-=begin code CPP
+=begin code cpp
 
    %type<add_exp_node> add_exp
    %type<mul_exp_node> mul_exp
@@ -419,7 +420,7 @@ instantiations.
    add_exp: mul_exp + div_exp
          { $$ = new add_exp_node<add_exp_node, mul_exp_node> ($1, $3); }
 
-=end code CPP
+=end code
 
 Referring to the type of untyped (non)terminals is an error.
 
