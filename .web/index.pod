@@ -2,11 +2,7 @@
 
 The C<yaccpp> project is a preprocessor for YACC/Bison grammars.
 
-=cut
-
 L<Git repository|https://github.com/pippijn/yaccpp>
-
-=pod
 
 Yaccpp implements a few features on top of traditional YACC. As you will see
 after reading this article, Yaccpp is more than just a preprocessor. Yaccpp is a
@@ -424,7 +420,6 @@ instantiations.
 
 Referring to the type of untyped (non)terminals is an error.
 
-=back
 
 =head2 Extensible through Perl
 
