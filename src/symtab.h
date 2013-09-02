@@ -32,4 +32,4 @@ struct symbol_table
   scope_map scopes;
 };
 
-extern symbol_table symtab;
+extern symbol_table *symtab;

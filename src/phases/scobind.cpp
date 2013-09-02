@@ -41,7 +41,7 @@ scobind::visit (identifier &n)
 {
   if (n.string[0] == '$')
     {
-      node_ptr ref = symtab.lookup (T_NONTERM, n.string.substr (1));
+      node_ptr ref = symtab->lookup (T_NONTERM, n.string.substr (1));
       if (!ref)
         throw semantic_error (&n, "could not resolve reference `" + n.string + "'");
 
@@ -58,7 +58,7 @@ scobind::visit (yaccvar &n)
 {
   if (n.string[0] == '$')
     {
-      node_ptr ref = symtab.lookup (T_NONTERM, n.string.substr (1));
+      node_ptr ref = symtab->lookup (T_NONTERM, n.string.substr (1));
       if (!ref)
         throw semantic_error (&n, "could not resolve reference `" + n.string + "'");
       n.ref = ref;
@@ -69,17 +69,17 @@ scobind::visit (yaccvar &n)
 node_ptr
 scobind::visit (rule &n)
 {
-  symtab.enter_scope (&n);
+  symtab->enter_scope (&n);
   visitor::visit (n);
-  symtab.leave_scope ();
+  symtab->leave_scope ();
   return &n;
 }
 
 node_ptr
 scobind::visit (rule_alt &n)
 {
-  symtab.enter_scope (&n);
+  symtab->enter_scope (&n);
   visitor::visit (n);
-  symtab.leave_scope ();
+  symtab->leave_scope ();
   return &n;
 }

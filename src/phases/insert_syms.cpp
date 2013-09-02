@@ -32,7 +32,7 @@ namespace
 
     ~insert_syms ()
     {
-      //symtab.print ();
+      //symtab->print ();
     }
 
     enum state_type
@@ -63,14 +63,14 @@ node_ptr
 insert_syms::visit (identifier &n)
 {
   if (!is_ref (n.string[0]))
-    symtab.insert (symtype, n.string, sym ? move (sym) : &n);
+    symtab->insert (symtype, n.string, sym ? move (sym) : &n);
   return visitor::visit (n);
 }
 
 node_ptr
 insert_syms::visit (documents &n)
 {
-  symtab.clear ();
+  symtab->clear ();
   return visitor::visit (n);
 }
 
@@ -127,15 +127,15 @@ insert_syms::visit (rules &n)
 node_ptr
 insert_syms::visit (rule &n)
 {
-  symtab.enter_scope (&n);
-  symtab.insert (T_NONTERM, "$", n.nonterm);
+  symtab->enter_scope (&n);
+  symtab->insert (T_NONTERM, "$", n.nonterm);
   {
     local (sym) = &n;
     resume (nonterm);
   }
   resume_if (type);
   resume (rhs);
-  symtab.leave_scope ();
+  symtab->leave_scope ();
   return &n;
 }
 
@@ -149,10 +149,10 @@ insert_syms::visit (rule_rhs &n)
 node_ptr
 insert_syms::visit (rule_alt &n)
 {
-  symtab.enter_scope (&n);
+  symtab->enter_scope (&n);
   altc = 1;
   visitor::visit (n);
-  symtab.leave_scope ();
+  symtab->leave_scope ();
   return &n;
 }
 
@@ -160,7 +160,7 @@ node_ptr
 insert_syms::visit (rule_alt_part &n)
 {
   resume (part);
-  symtab.insert (T_NONTERM, boost::lexical_cast<std::string> (altc++), n.part);
+  symtab->insert (T_NONTERM, boost::lexical_cast<std::string> (altc++), n.part);
   if (n.name)
     {
       local (sym) = n.part;
@@ -186,7 +186,7 @@ insert_syms::visit (macro_call &n)
 {
   if (state == S_NONE)
     {
-      printf ("macro definition\n");
+      //printf ("macro definition\n");
       local (symtype) = T_MACRO;
       // sym comes from rule
       resume (macro);

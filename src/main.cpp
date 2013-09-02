@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "phases.h"
 #include "sighandler.h"
+#include "symtab.h"
 
 #include <algorithm>
 #include <clocale>
@@ -29,6 +30,9 @@ try
       return EXIT_SUCCESS;
     }
 
+  symbol_table local_symtab;
+  symtab = &local_symtab;
+
   std::vector<std::string> files (argv + 1, argv + argc);;
 
 #if 0
@@ -40,8 +44,6 @@ try
 
   if (node_ptr doc = parse ())
     {
-      phases::run ("xmlprint", doc);
-      return EXIT_SUCCESS;
       phases::run ("nop", doc);
       phases::run ("anon_rules", doc);
       phases::run ("cardinality", doc);
@@ -49,7 +51,9 @@ try
       phases::run ("scobind", doc);
       phases::run ("resolve_refs", doc);
       phases::run ("call_macros", doc);
+      return EXIT_SUCCESS;
       phases::run ("print", doc);
+      phases::run ("xmlprint", doc);
     }
   else
     {

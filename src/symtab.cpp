@@ -8,7 +8,7 @@
 
 #include <boost/foreach.hpp>
 
-symbol_table symtab;
+symbol_table *symtab;
 
 static node_ptr ambiguous = new tokens::identifier ("<ambiguous>");
 
