@@ -9,6 +9,7 @@ Build-Depends:
   ocaml-nox (>= 3.12),
   ocaml-findlib,
   libbaselib-ocaml-dev,
+  libboost-dev,
   dh-ocaml,
   debhelper (>= 8.0.0)
 Standards-Version: 3.9.2
