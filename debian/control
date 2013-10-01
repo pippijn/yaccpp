@@ -2,12 +2,14 @@ Source: yaccpp
 Section: devel
 Priority: optional
 Maintainer: Pippijn van Steenhoven <pip88nl@gmail.com>
-Uploaders: 
-  Pippijn van Steenhoven <pip88nl@gmail.com>
 Build-Depends:
-  omake,
-  libboost-dev,
-  debhelper (>= 8.0.0)
+ debhelper (>= 8.0.0),
+ obuild,
+ libbaselib-ocaml-dev,
+ libboost-dev,
+ bison,
+ flex,
+ valgrind
 Standards-Version: 3.9.2
 Homepage: https://github.com/pippijn/yaccpp
 Vcs-Git: git://github.com/pippijn/yaccpp
@@ -17,4 +19,8 @@ Package: yaccpp
 Architecture: any
 Depends: ${misc:Depends}
 Description: Yacc Preprocessor
- Stuff.
+ Yaccpp implements a few features on top of traditional YACC. Yaccpp is more
+ than just a preprocessor. Yaccpp is a purely functional dynamically typed
+ domain specific programming language for describing context-free grammars.
+ That is quite a mouthful, but this power does not get in the way. Yaccpp is
+ still about writing grammars, not programs.
