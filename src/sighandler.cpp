@@ -1,21 +1,27 @@
 #include "sighandler.h"
 
-#include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <stdexcept>
 
-bool should_terminate = false;
+sig_atomic_t should_terminate = false;
+
+template<size_t N>
+static void
+write (int fd, char const (&msg)[N])
+{
+  write (fd, msg, N - 1);
+}
 
 static void
 throw_signal (int signum)
 {
   if (should_terminate)
     {
-      puts ("second interrupt caught - exiting");
-      exit (1);
+      write (STDOUT_FILENO, "second interrupt caught - exiting");
+      _Exit (1);
     }
-  puts ("interrupt caught - terminating");
+  write (STDOUT_FILENO, "interrupt caught - terminating");
   should_terminate = true;
 }
 

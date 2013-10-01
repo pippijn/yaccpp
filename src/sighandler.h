@@ -1,3 +1,5 @@
 #pragma once
 
-extern bool should_terminate;
+#include <csignal>
+
+extern sig_atomic_t should_terminate;
