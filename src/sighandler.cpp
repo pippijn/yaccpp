@@ -1,10 +1,9 @@
-#include "sighandler.h"
-
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <stdexcept>
 
-sig_atomic_t should_terminate = false;
+static sig_atomic_t should_terminate = false;
 
 template<size_t N>
 static void

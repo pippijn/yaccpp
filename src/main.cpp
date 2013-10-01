@@ -1,7 +1,6 @@
 #include "lexer.h"
 #include "parser.h"
 #include "phases.h"
-#include "sighandler.h"
 #include "symtab.h"
 
 #include <algorithm>

@@ -1,4 +1,4 @@
-ocaml-yaccpp (0.1) precise; urgency=low
+yaccpp (0.1) precise; urgency=low
 
   * Initial release. (Closes: #9999)
 

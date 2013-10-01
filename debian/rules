@@ -7,6 +7,6 @@
 DESTDIR = $(CURDIR)/debian/tmp
 
 %:
-	dh --with ocaml $@
+	dh $@
 
 include $(shell obuild --where)/debian/rules.common

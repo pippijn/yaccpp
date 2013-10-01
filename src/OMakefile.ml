@@ -38,7 +38,6 @@ install Program ".DEFAULT" [
     "parser.h";
     "phase.h";
     "phases.h";
-    "sighandler.h";
     "symtab.h";
     "visitor.h";
     "y.tab.h";
