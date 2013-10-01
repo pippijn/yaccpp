@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <stdexcept>
 
+#include <unistd.h>
+
 static sig_atomic_t should_terminate = false;
 
 template<size_t N>
