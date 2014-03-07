@@ -1,4 +1,4 @@
-Name = yaccpp
+Name		= yaccpp
 
 C-Sources[] =
   phases/anon_rules.cpp
@@ -42,8 +42,8 @@ C-Headers[] =
   yyparse.hpp
   yylex.hpp
 
-OM_YFLAGS = -d
-OM_CPPFLAGS = -I$(dir .)
+OM_YFLAGS	= -d
+OM_CPPFLAGS	= -I$(dir .)
 
 recurse-subdirs = phases
 
