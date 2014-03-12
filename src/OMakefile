@@ -45,7 +45,6 @@ C-Headers[] =
 OM_YFLAGS	= -d
 OM_CPPFLAGS	= -I$(dir .)
 
-recurse-subdirs = phases
-
+compute-recurse-subdirs ($(C-Sources))
 TARGET = $(program-install)
 .DEFAULT: $(TARGET)
